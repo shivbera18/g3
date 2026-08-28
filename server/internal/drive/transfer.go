@@ -35,6 +35,9 @@ func (m *Manager) Upload(ctx context.Context, refreshToken, folderID, name, cont
 
 // Download opens a Drive file for reading. If rangeHeader is non-empty it is
 // passed through (Drive returns 206 + the requested byte range).
+// AcknowledgeAbuse is set to allow downloading files flagged by Drive's
+// virus scan (e.g. exes/dlls like smi.exe) which otherwise return 403
+// cannotDownloadAbusiveFile.
 func (m *Manager) Download(ctx context.Context, refreshToken, fileID, rangeHeader string) (*http.Response, error) {
 	svc, err := m.Service(ctx, refreshToken)
 	if err != nil {
@@ -42,7 +45,7 @@ func (m *Manager) Download(ctx context.Context, refreshToken, fileID, rangeHeade
 	}
 	var resp *http.Response
 	err = retry(ctx, func() error {
-		call := svc.Files.Get(fileID).Context(ctx)
+		call := svc.Files.Get(fileID).AcknowledgeAbuse(true).Context(ctx)
 		if rangeHeader != "" {
 			call.Header().Set("Range", rangeHeader)
 		}
