@@ -15,6 +15,14 @@ import (
 // ServeHTTP authenticates the request (SigV4, header or presigned query) and
 // dispatches the S3 operation.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "PUT, GET, HEAD, DELETE, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "authorization, content-type, x-amz-content-sha256, x-amz-date, x-amz-meta-*")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	cred, ok := s.authenticate(w, r)
 	if !ok {
 		return
